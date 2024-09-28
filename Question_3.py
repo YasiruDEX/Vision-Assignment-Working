@@ -1,22 +1,45 @@
 import cv2
 import numpy as np
-import matplotlib.pyplot as plt# Load brain image
+import matplotlib.pyplot as plt
 
-# Convert to L*a*b* color space
+# Load the image
 image = cv2.imread('image dataset/highlights_and_shadows.jpg')
-lab_image = cv2.cvtColor(image, cv2.COLOR_BGR2LAB)
 
-# Apply gamma correction to L channel
-def gamma_correction(L_channel, gamma):
-    invGamma = 1.0 / gamma
-    table = np.array([((i / 255.0) ** invGamma) * 255 for i in np.arange(0, 256)]).astype(np.uint8)
-    return cv2.LUT(L_channel, table)
+# Convert the image from BGR to L*a*b* color space
+lab_image = cv2.cvtColor(image, cv2.COLOR_BGR2Lab)
 
-L_channel = lab_image[:,:,0]
-gamma_corrected_L = gamma_correction(L_channel, gamma=2.0)
+# Extract the L* channel (lightness)
+L_channel, a_channel, b_channel = cv2.split(lab_image)
 
-# Show histograms
-plt.hist(L_channel.ravel(), bins=256, color='blue', alpha=0.5, label='Original L')
-plt.hist(gamma_corrected_L.ravel(), bins=256, color='red', alpha=0.5, label='Gamma Corrected L')
-plt.legend()
+# Apply gamma correction to the L channel
+gamma = 0.5  # Example gamma value (you can change it)
+L_corrected = np.array(255 * (L_channel / 255) ** gamma, dtype='uint8')
+
+# Merge the corrected L channel back with the original a* and b* channels
+lab_corrected = cv2.merge([L_corrected, a_channel, b_channel])
+
+# Convert the corrected L*a*b* image back to BGR for display
+image_corrected = cv2.cvtColor(lab_corrected, cv2.COLOR_Lab2BGR)
+
+# Plot the original and gamma corrected images
+plt.figure(figsize=(10, 5))
+
+plt.subplot(2, 2, 1)
+plt.imshow(cv2.cvtColor(image, cv2.COLOR_BGR2RGB))
+plt.title('Original Image')
+
+plt.subplot(2, 2, 2)
+plt.imshow(cv2.cvtColor(image_corrected, cv2.COLOR_BGR2RGB))
+plt.title(f'Gamma Corrected Image (γ={gamma})')
+
+# Plot histograms for original and gamma-corrected L* channel
+plt.subplot(2, 2, 3)
+plt.hist(L_channel.ravel(), bins=256, range=(0, 256), color='black')
+plt.title('Original L* Channel Histogram')
+
+plt.subplot(2, 2, 4)
+plt.hist(L_corrected.ravel(), bins=256, range=(0, 256), color='black')
+plt.title(f'Gamma Corrected L* Channel Histogram (γ={gamma})')
+
+plt.tight_layout()
 plt.show()
