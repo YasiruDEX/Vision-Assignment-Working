@@ -1,78 +1,85 @@
 import cv2
-import numpy as np
 import matplotlib.pyplot as plt
+import numpy as np
 
-# Load the brain proton density image (grayscale image)
-image = cv2.imread('image dataset/brain_proton_density_slice.png', 0)
+# Load the brain proton density image
+brain_proton_img = cv2.imread('image dataset/brain_proton_density_slice.png', cv2.IMREAD_GRAYSCALE)
 
-# Intensity transformation for white matter (enhance higher intensities)
-# Define control points for white matter
-white_matter_points = np.array([(0, 0), (100, 100), (200, 255), (255, 255)])
+# Display image shape
+print(f"Image Shape: {brain_proton_img.shape}")
 
-# Create transformation for white matter
-white_matter_transform = np.zeros(256, dtype='uint8')
+# Define points for white and gray matter
+white_matter_point = (130, 150)
+gray_matter_point = (140, 95)
 
-# Piecewise transformation for white matter
-for i in range(1, len(white_matter_points)):
-    x_start, y_start = white_matter_points[i - 1]
-    x_end, y_end = white_matter_points[i]
-    slope = (y_end - y_start) / (x_end - x_start)
-    for x in range(x_start, x_end):
-        white_matter_transform[x] = np.clip(y_start + int(slope * (x - x_start)), 0, 255)
+# Get pixel intensity values at the selected points
+white_matter_intensity = brain_proton_img[white_matter_point[1], white_matter_point[0]]
+gray_matter_intensity = brain_proton_img[gray_matter_point[1], gray_matter_point[0]]
 
-# Intensity transformation for gray matter (enhance mid-range intensities)
-# Define control points for gray matter
-gray_matter_points = np.array([(0, 0), (50, 50), (150, 255), (255, 255)])
+# Print the pixel intensity values
+print(f"White Matter Intensity: {white_matter_intensity}")
+print(f"Gray Matter Intensity: {gray_matter_intensity}")
 
-# Create transformation for gray matter
-gray_matter_transform = np.zeros(256, dtype='uint8')
+# Function to transform pixel intensities for white and gray matter
+def accentuate_matter(image):
+    # Create a copy of the image to apply transformations
+    transformed_image = np.copy(image)
+    
+    # Apply transformation for gray matter (186 <= pixel <= 250)
+    gray_matter_mask = (image >= 186) & (image <= 250)
+    transformed_image[gray_matter_mask] = np.clip(1.75 * image[gray_matter_mask] + 30, 0, 255)
+    
+    # Apply transformation for white matter (150 <= pixel <= 185)
+    white_matter_mask = (image >= 150) & (image <= 185)
+    transformed_image[white_matter_mask] = np.clip(1.55 * image[white_matter_mask] + 22.5, 0, 255)
+    
+    return transformed_image, white_matter_mask, gray_matter_mask
 
-# Piecewise transformation for gray matter
-for i in range(1, len(gray_matter_points)):
-    x_start, y_start = gray_matter_points[i - 1]
-    x_end, y_end = gray_matter_points[i]
-    slope = (y_end - y_start) / (x_end - x_start)
-    for x in range(x_start, x_end):
-        gray_matter_transform[x] = np.clip(y_start + int(slope * (x - x_start)), 0, 255)
+# Apply the transformation to the brain image
+transformed_brain_img, white_matter_mask, gray_matter_mask = accentuate_matter(brain_proton_img)
 
-# Apply the transformations using cv2.LUT (Look-Up Table)
-image_white_accentuated = cv2.LUT(image, white_matter_transform)
-image_gray_accentuated = cv2.LUT(image, gray_matter_transform)
-
-# Plot the original and transformed images for white and gray matter accentuation
-plt.figure(figsize=(10, 6))
+# Plot all the results in a single window
+fig, axs = plt.subplots(2, 3, figsize=(15, 10))
 
 # Original image
-plt.subplot(2, 3, 1)
-plt.imshow(image, cmap='gray')
-plt.title('Original Image')
+axs[0, 0].imshow(brain_proton_img, cmap='gray')
+axs[0, 0].scatter(white_matter_point[0], white_matter_point[1], color='red', label='White Matter')
+axs[0, 0].scatter(gray_matter_point[0], gray_matter_point[1], color='blue', label='Gray Matter')
+axs[0, 0].legend()
+axs[0, 0].set_title("Original Brain Proton Density Image")
 
-# White matter accentuated image
-plt.subplot(2, 3, 2)
-plt.imshow(image_white_accentuated, cmap='gray')
-plt.title('White Matter Accentuated')
+# Transformed image
+axs[0, 1].imshow(transformed_brain_img, cmap='gray')
+axs[0, 1].set_title("Transformed Brain Image")
 
-# Gray matter accentuated image
-plt.subplot(2, 3, 3)
-plt.imshow(image_gray_accentuated, cmap='gray')
-plt.title('Gray Matter Accentuated')
+# White matter mask
+axs[0, 2].imshow(white_matter_mask, cmap='gray')
+axs[0, 2].set_title("White Matter Mask")
 
-# Plot the transformation curves for white and gray matter
-plt.subplot(2, 3, 5)
-plt.plot(white_matter_transform, label='White Matter Transformation')
-plt.title('White Matter Intensity Transformation')
-plt.xlabel('Input Intensity')
-plt.ylabel('Output Intensity')
-plt.grid(True)
-plt.legend()
+# Gray matter mask
+axs[1, 0].imshow(gray_matter_mask, cmap='gray')
+axs[1, 0].set_title("Gray Matter Mask")
 
-plt.subplot(2, 3, 6)
-plt.plot(gray_matter_transform, label='Gray Matter Transformation')
-plt.title('Gray Matter Intensity Transformation')
-plt.xlabel('Input Intensity')
-plt.ylabel('Output Intensity')
-plt.grid(True)
-plt.legend()
+# Intensity transformation curves
+x_vals = np.arange(0, 256)  # Intensity range (0-255)
 
+# Apply the transformation only within specific ranges
+white_matter_transformed = np.array([1.55 * x + 22.5 if 150 <= x <= 185 else x for x in x_vals])
+gray_matter_transformed = np.array([1.75 * x + 30 if 186 <= x <= 250 else x for x in x_vals])
+
+# Plot intensity transformation curves
+axs[1, 1].plot(x_vals, white_matter_transformed, label='White Matter Transformation', color='blue')
+axs[1, 1].plot(x_vals, gray_matter_transformed, label='Gray Matter Transformation', color='green')
+axs[1, 1].plot(x_vals, x_vals, label='Original Intensity', linestyle='--', color='red')  # Identity line
+axs[1, 1].set_title('Intensity Transformations')
+axs[1, 1].set_xlabel('Original Intensity')
+axs[1, 1].set_ylabel('Transformed Intensity')
+axs[1, 1].legend()
+axs[1, 1].grid(True)
+
+# Hide the empty subplot
+axs[1, 2].axis('off')
+
+# Adjust layout for better spacing
 plt.tight_layout()
 plt.show()

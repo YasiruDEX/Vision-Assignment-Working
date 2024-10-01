@@ -3,8 +3,24 @@ import numpy as np
 import matplotlib.pyplot as plt
 
 # Function to apply histogram equalization
-def histogram_equalization(image):
-    return cv2.equalizeHist(image)
+def histogram_equalization(f):
+    L = 256  # Number of gray levels
+    M, N = f.shape  # Get image dimensions
+
+    # Get histogram
+    hist = cv2.calcHist([f], [0], None, [L], [0, L]).flatten()
+
+    # Calculate CDF
+    cdf = hist.cumsum()
+    
+    # Normalize CDF to the range [0, L-1]
+    cdf_normalized = (L - 1) * cdf / cdf[-1]
+    
+    # Define transformation function
+    t = np.array([cdf_normalized[k] for k in range(L)]).astype("uint8")
+    
+    # Apply the transformation
+    return t[f]
 
 # Load the image in grayscale
 image = cv2.imread('image dataset/shells.tif', 0)  # The 0 flag ensures the image is loaded in grayscale
@@ -16,30 +32,29 @@ else:
     # Apply histogram equalization
     hist_equalized = histogram_equalization(image)
 
-    # Plot the histograms before and after equalization
-    plt.figure(figsize=(10, 5))
+    # Create a figure with 2 rows and 2 columns
+    fig, axs = plt.subplots(2, 2, figsize=(12, 10))
 
-    # Original image histogram
-    plt.subplot(1, 2, 1)
-    plt.hist(image.ravel(), bins=256, color='blue', alpha=0.5)
-    plt.title('Original Image Histogram')
+    # Display the original image
+    axs[0, 0].imshow(image, cmap='gray')
+    axs[0, 0].set_title('Original Image')
+    axs[0, 0].axis('off')
 
-    # Equalized image histogram
-    plt.subplot(1, 2, 2)
-    plt.hist(hist_equalized.ravel(), bins=256, color='red', alpha=0.5)
-    plt.title('Equalized Image Histogram')
+    # Display the equalized image
+    axs[0, 1].imshow(hist_equalized, cmap='gray')
+    axs[0, 1].set_title('Equalized Image')
+    axs[0, 1].axis('off')
 
-    # Show both histograms
-    plt.show()
+    # Plot the histogram for the original image
+    axs[1, 0].hist(image.ravel(), bins=256, color='blue', alpha=0.5)
+    axs[1, 0].set_title('Original Image Histogram')
 
-    # Show the original and equalized images
-    plt.figure(figsize=(10, 5))
-    plt.subplot(1, 2, 1)
-    plt.imshow(image, cmap='gray')
-    plt.title('Original Image')
+    # Plot the histogram for the equalized image
+    axs[1, 1].hist(hist_equalized.ravel(), bins=256, color='red', alpha=0.5)
+    axs[1, 1].set_title('Equalized Image Histogram')
 
-    plt.subplot(1, 2, 2)
-    plt.imshow(hist_equalized, cmap='gray')
-    plt.title('Equalized Image')
+    # Adjust the layout for better spacing
+    plt.tight_layout()
 
+    # Show the figure
     plt.show()

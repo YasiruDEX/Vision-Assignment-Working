@@ -11,46 +11,71 @@ hsv_image = cv2.cvtColor(image, cv2.COLOR_BGR2HSV)
 # Split into hue, saturation, and value planes
 hue, saturation, value = cv2.split(hsv_image)
 
+
+# Plotting the images
+plt.figure(figsize=(12, 4))
+
+# Display the Hue channel
+plt.subplot(1, 3, 1)
+plt.imshow(hue, cmap='gray')
+plt.title('Hue')
+plt.axis('off')
+
+# Display the Saturation channel
+plt.subplot(1, 3, 2)
+plt.imshow(saturation, cmap='gray')
+plt.title('Saturation')
+plt.axis('off')
+
+# Display the Value channel
+plt.subplot(1, 3, 3)
+plt.imshow(value, cmap='gray')
+plt.title('Value')
+plt.axis('off')
+
+# Show the plot
+plt.tight_layout()
+plt.show()
+
+
 # Parameters for the intensity transformation
 sigma = 70
-a = 0.5  # You can adjust this to find a visually pleasing result
+a_values = [0.1, 0.3, 0.5, 0.7, 0.9]  # Different values of 'a'
 
 # Define the intensity transformation function
 def vibrance_transformation(x, a, sigma):
     return np.clip(x + a * 128 * np.exp(-((x - 128) ** 2) / (2 * sigma ** 2)), 0, 255)
 
-# Apply the transformation to the saturation plane
-saturation_transformed = vibrance_transformation(saturation, a, sigma).astype(np.uint8)
+# Plot setup
+plt.figure(figsize=(15, 10))
 
-# Recombine the hue, saturation, and value planes
-hsv_transformed = cv2.merge([hue, saturation_transformed, value])
+for i, a in enumerate(a_values):
+    # Apply the transformation to the saturation plane
+    saturation_transformed = vibrance_transformation(saturation, a, sigma).astype(np.uint8)
 
-# Convert the transformed HSV image back to BGR color space
-vibrance_enhanced_image = cv2.cvtColor(hsv_transformed, cv2.COLOR_HSV2BGR)
+    # Recombine the hue, saturation, and value planes
+    hsv_transformed = cv2.merge([hue, saturation_transformed, value])
 
-# Plot the original image, vibrance-enhanced image, and the transformation function
-plt.figure(figsize=(15, 5))
+    # Convert the transformed HSV image back to BGR color space
+    vibrance_enhanced_image = cv2.cvtColor(hsv_transformed, cv2.COLOR_HSV2BGR)
 
-# Display original image
-plt.subplot(1, 3, 1)
-plt.imshow(cv2.cvtColor(image, cv2.COLOR_BGR2RGB))
-plt.title('Original Image')
+    # Display vibrance-enhanced image
+    plt.subplot(3, 3, i + 1)
+    plt.imshow(cv2.cvtColor(vibrance_enhanced_image, cv2.COLOR_BGR2RGB))
+    plt.title(f'Vibrance Enhanced (a = {a})')
 
-# Display vibrance-enhanced image
-plt.subplot(1, 3, 2)
-plt.imshow(cv2.cvtColor(vibrance_enhanced_image, cv2.COLOR_BGR2RGB))
-plt.title(f'Vibrance Enhanced Image (a = {a})')
-
-# Plot the intensity transformation function
+# Plot the intensity transformation functions for each 'a' value
 x_values = np.arange(256)
-y_values = vibrance_transformation(x_values, a, sigma)
+plt.subplot(3, 3, 6)
+for a in a_values:
+    y_values = vibrance_transformation(x_values, a, sigma)
+    plt.plot(x_values, y_values, label=f'a = {a}')
 
-plt.subplot(1, 3, 3)
-plt.plot(x_values, y_values, label=f'Intensity Transformation (a = {a})')
 plt.title('Intensity Transformation')
 plt.xlabel('Input Intensity (x)')
 plt.ylabel('Output Intensity (f(x))')
 plt.grid(True)
+plt.legend()
 
 plt.tight_layout()
 plt.show()

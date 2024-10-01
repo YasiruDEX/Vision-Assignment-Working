@@ -25,8 +25,8 @@ def compute_normalized_ssd(original, zoomed):
     return normalized_ssd
 
 # Load original and zoomed-out versions of the images
-original_image = cv2.imread('image dataset/a1q5images/im03.png', 0)  # Load the original image in grayscale
-zoomed_out_image = cv2.imread('image dataset/a1q5images/im03small.png', 0)  # Load the zoomed-out version
+original_image = cv2.imread('image dataset/a1q5images/taylor.jpg', 0)  # Load the original image in grayscale
+zoomed_out_image = cv2.imread('image dataset/a1q5images/taylor_small.jpg', 0)  # Load the zoomed-out version
 
 if original_image is None or zoomed_out_image is None:
     print("Error loading images. Please check the file paths.")
@@ -44,9 +44,20 @@ else:
     print(f"Normalized SSD (Nearest-Neighbor): {ssd_nn}")
     print(f"Normalized SSD (Bilinear Interpolation): {ssd_bilinear}")
 
-    # Show images
-    cv2.imshow('Original Image', original_image)
-    cv2.imshow('Zoomed Image (Nearest-Neighbor)', zoomed_image_nn)
-    cv2.imshow('Zoomed Image (Bilinear)', zoomed_image_bilinear)
+    # Resize all images to match the size of the original image
+    zoomed_out_image_resized = cv2.resize(zoomed_out_image, original_image.shape[:2][::-1], interpolation=cv2.INTER_LINEAR)
+    zoomed_image_nn_resized = cv2.resize(zoomed_image_nn, original_image.shape[:2][::-1], interpolation=cv2.INTER_LINEAR)
+    zoomed_image_bilinear_resized = cv2.resize(zoomed_image_bilinear, original_image.shape[:2][::-1], interpolation=cv2.INTER_LINEAR)
+
+    # Ensure all images are in the same type (grayscale)
+    zoomed_out_image_resized = zoomed_out_image_resized.astype(np.uint8)
+    zoomed_image_nn_resized = zoomed_image_nn_resized.astype(np.uint8)
+    zoomed_image_bilinear_resized = zoomed_image_bilinear_resized.astype(np.uint8)
+
+    # Concatenate the images horizontally (small, nearest-neighbor, bilinear)
+    concatenated_images = cv2.hconcat([zoomed_out_image_resized, zoomed_image_nn_resized, zoomed_image_bilinear_resized])
+
+    # Display all images in one window
+    cv2.imshow('Small Image | Nearest-Neighbor Zoom | Bilinear Zoom', concatenated_images)
     cv2.waitKey(0)
     cv2.destroyAllWindows()

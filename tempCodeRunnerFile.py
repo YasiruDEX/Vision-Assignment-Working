@@ -1,1 +1,8 @@
-image = cv2.imread('image dataset/einstein.png', cv2.IMREAD_GRAYSCALE)  # Load in grayscale for Sobel
+plt.subplot(236)
+# # plt.plot(hist_v_orig, color='blue', label='Original Histogram')
+# # plt.plot(hist_v_eq, color='red', label='Equalized Histogram')
+# plt.title('Value Plane Histograms')
+# plt.xlabel('Intensity Value')
+# plt.ylabel('Frequency')
+# plt.legend()
+# plt.grid()

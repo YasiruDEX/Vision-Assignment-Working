@@ -1,19 +1,29 @@
 import cv2
 import numpy as np
+import matplotlib.pyplot as plt
 
 # Load the image
 image = cv2.imread('image dataset/einstein.png', cv2.IMREAD_GRAYSCALE)  # Load in grayscale for Sobel
 
-# Sobel operator (using OpenCV)
-sobelx = cv2.Sobel(image, cv2.CV_64F, 1, 0, ksize=3)  # Gradient in X direction
-sobely = cv2.Sobel(image, cv2.CV_64F, 0, 1, ksize=3)  # Gradient in Y direction
+# Define a Sobel filter kernel (for detecting edges in x direction)
+sobel_kernel_x = np.array([[-1, 0, 1],
+                           [-2, 0, 2],
+                           [-1, 0, 1]])
 
-# Combine the gradients
-sobel_combined = cv2.magnitude(sobelx, sobely)
+# Apply the Sobel filter using filter2D function
+sobel_x = cv2.filter2D(image, -1, sobel_kernel_x)
 
-# Show the result
-cv2.imshow('Sobel X', sobelx)
-cv2.imshow('Sobel Y', sobely)
-cv2.imshow('Sobel Combined', sobel_combined)
-cv2.waitKey(0)
-cv2.destroyAllWindows()
+# Display the original image and the Sobel filtered image
+plt.figure(figsize=(10, 5))
+
+plt.subplot(1, 2, 1)
+plt.imshow(image, cmap='gray')
+plt.title('Original Image')
+plt.axis('off')
+
+plt.subplot(1, 2, 2)
+plt.imshow(sobel_x, cmap='gray')
+plt.title('Sobel Filtered Image (X direction)')
+plt.axis('off')
+
+plt.show()
